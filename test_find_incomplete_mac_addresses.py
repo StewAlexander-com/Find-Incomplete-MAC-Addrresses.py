@@ -23,6 +23,122 @@ spec.loader.exec_module(find_incomplete_module)
 find_incomplete_mac_addresses = find_incomplete_module.find_incomplete_mac_addresses
 save_results = find_incomplete_module.save_results
 display_results = find_incomplete_module.display_results
+resolve_file_path = find_incomplete_module.resolve_file_path
+get_input_file = find_incomplete_module.get_input_file
+
+
+class TestResolveFilePath:
+    """Test cases for path resolution functionality."""
+    
+    def test_resolve_absolute_path(self, tmp_path):
+        """Test resolving an absolute path."""
+        test_file = tmp_path / "test_arp.txt"
+        test_file.write_text("test data")
+        
+        result = resolve_file_path(str(test_file))
+        
+        assert result.exists()
+        assert result.is_file()
+        assert result == test_file.resolve()
+    
+    def test_resolve_relative_path(self, tmp_path, monkeypatch):
+        """Test resolving a relative path."""
+        # Change to tmp_path directory
+        monkeypatch.chdir(tmp_path)
+        
+        test_file = tmp_path / "test_arp.txt"
+        test_file.write_text("test data")
+        
+        result = resolve_file_path("test_arp.txt")
+        
+        assert result.exists()
+        assert result.is_file()
+        assert result.name == "test_arp.txt"
+    
+    def test_resolve_relative_path_with_parent(self, tmp_path, monkeypatch):
+        """Test resolving a relative path with .. parent directory."""
+        # Create a subdirectory
+        subdir = tmp_path / "subdir"
+        subdir.mkdir()
+        test_file = tmp_path / "test_arp.txt"
+        test_file.write_text("test data")
+        
+        # Change to subdirectory
+        monkeypatch.chdir(subdir)
+        
+        result = resolve_file_path("../test_arp.txt")
+        
+        assert result.exists()
+        assert result.is_file()
+        assert result.name == "test_arp.txt"
+    
+    def test_resolve_file_not_found(self):
+        """Test that FileNotFoundError is raised for non-existent file."""
+        with pytest.raises(FileNotFoundError, match="not found"):
+            resolve_file_path("/nonexistent/file.txt")
+    
+    def test_resolve_directory_not_file(self, tmp_path):
+        """Test that error is raised when path is a directory, not a file."""
+        test_dir = tmp_path / "test_dir"
+        test_dir.mkdir()
+        
+        with pytest.raises(FileNotFoundError, match="is not a file"):
+            resolve_file_path(str(test_dir))
+
+
+class TestGetInputFile:
+    """Test cases for getting input file with command-line or interactive mode."""
+    
+    def test_get_input_file_with_argument(self, tmp_path):
+        """Test get_input_file with command-line argument."""
+        test_file = tmp_path / "test_arp.txt"
+        test_file.write_text("test data")
+        
+        result = get_input_file(str(test_file))
+        
+        assert result.exists()
+        assert result == test_file.resolve()
+    
+    def test_get_input_file_with_relative_path(self, tmp_path, monkeypatch):
+        """Test get_input_file with relative path argument."""
+        monkeypatch.chdir(tmp_path)
+        
+        test_file = tmp_path / "test_arp.txt"
+        test_file.write_text("test data")
+        
+        result = get_input_file("test_arp.txt")
+        
+        assert result.exists()
+        assert result.is_file()
+    
+    def test_get_input_file_interactive_mode(self, tmp_path, monkeypatch):
+        """Test get_input_file in interactive mode with mocked input."""
+        monkeypatch.chdir(tmp_path)
+        
+        test_file = tmp_path / "test_arp.txt"
+        test_file.write_text("test data")
+        
+        # Mock the input() function
+        monkeypatch.setattr('builtins.input', lambda _: "test_arp.txt")
+        
+        result = get_input_file()
+        
+        assert result.exists()
+        assert result.is_file()
+        assert result.name == "test_arp.txt"
+    
+    def test_get_input_file_interactive_empty_input(self, monkeypatch):
+        """Test get_input_file raises error on empty input."""
+        # Mock the input() function to return empty string
+        monkeypatch.setattr('builtins.input', lambda _: "")
+        
+        with pytest.raises(FileNotFoundError, match="No file path provided"):
+            get_input_file()
+    
+    def test_get_input_file_nonexistent_file(self):
+        """Test get_input_file raises error for non-existent file."""
+        with pytest.raises(FileNotFoundError):
+            get_input_file("/nonexistent/file.txt")
 
 
 class TestFindIncompleteMACAddresses:

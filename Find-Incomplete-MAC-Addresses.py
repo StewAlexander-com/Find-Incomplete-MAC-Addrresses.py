@@ -7,10 +7,11 @@ from a Cisco switch for any incomplete MAC addresses. If found, it lists
 the lines and saves the results to "Incomplete-MAC-Addresses.txt".
 """
 
+import argparse
 import os
 import sys
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 
 def display_banner() -> None:
@@ -27,30 +28,71 @@ def display_banner() -> None:
  └─────────────────────────────────────────┘ \n\n""")
 
 
-def get_input_file() -> Path:
+def resolve_file_path(file_path: str) -> Path:
     """
-    Prompt user to select an input file from the current directory.
+    Resolve a file path, handling absolute paths, relative paths, and ~ expansion.
     
+    Args:
+        file_path: File path string (can be absolute, relative, or start with ~).
+        
+    Returns:
+        Resolved Path object.
+        
+    Raises:
+        FileNotFoundError: If the file doesn't exist after resolution.
+    """
+    # Expand ~ to home directory
+    expanded_path = os.path.expanduser(file_path)
+    
+    # Convert to Path and resolve (handles relative paths and ..)
+    resolved_path = Path(expanded_path).resolve()
+    
+    if not resolved_path.exists():
+        raise FileNotFoundError(f"File '{file_path}' not found.")
+    
+    if not resolved_path.is_file():
+        raise FileNotFoundError(f"'{file_path}' is not a file.")
+    
+    return resolved_path
+
+
+def get_input_file(file_path: Optional[str] = None) -> Path:
+    """
+    Get input file path from command-line argument or prompt user.
+    
+    Args:
+        file_path: Optional file path from command-line argument.
+        
     Returns:
         Path object for the selected file.
         
     Raises:
         FileNotFoundError: If the specified file doesn't exist.
     """
-    print("Please select the #SH IP ARP Data text file from the current directory\n")
+    if file_path:
+        # Use command-line argument
+        return resolve_file_path(file_path)
+    
+    # Interactive mode: prompt user to select file
+    print("Please select the #SH IP ARP Data text file\n")
+    print("You can enter:")
+    print("  - A filename in the current directory")
+    print("  - A relative path (e.g., ../data/arp.txt)")
+    print("  - An absolute path (e.g., /path/to/arp.txt)")
+    print("  - A path with ~ (e.g., ~/Documents/arp.txt)\n")
     
     # List only files (not directories) in the current directory
     current_dir = Path.cwd()
     files = [f.name for f in current_dir.iterdir() if f.is_file()]
-    print(files, "\n")
+    if files:
+        print(f"Files in current directory: {files}\n")
     
-    filename = input("Please enter the file name: ").strip()
-    file_path = current_dir / filename
+    file_input = input("Please enter the file path: ").strip()
     
-    if not file_path.exists():
-        raise FileNotFoundError(f"File '{filename}' not found in current directory.")
+    if not file_input:
+        raise FileNotFoundError("No file path provided.")
     
-    return file_path
+    return resolve_file_path(file_input)
 
 
 def find_incomplete_mac_addresses(input_file: Path) -> List[str]:
@@ -118,10 +160,33 @@ def display_results(incomplete_lines: List[str], output_file: Path) -> None:
 
 def main() -> None:
     """Main program entry point."""
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        description="Find incomplete MAC addresses in Cisco switch ARP table output.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s arp_output.txt
+  %(prog)s /path/to/arp_output.txt
+  %(prog)s ~/Documents/switch_arp.txt
+  %(prog)s ../data/arp.txt
+  
+If no file is provided, the program will prompt you interactively.
+        """
+    )
+    parser.add_argument(
+        'input_file',
+        nargs='?',
+        help='Path to the ARP table output file (optional - will prompt if not provided)'
+    )
+    
+    args = parser.parse_args()
+    
     display_banner()
     
     try:
-        input_file = get_input_file()
+        input_file = get_input_file(args.input_file)
+        print(f"Processing file: {input_file}\n")
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

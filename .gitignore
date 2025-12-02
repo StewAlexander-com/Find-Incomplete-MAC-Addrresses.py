@@ -38,6 +38,22 @@ htmlcov/
 *.cover
 .hypothesis/
 
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# Linting
+.ruff_cache/
+.flake8
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
 # Test output files
 Incomplete-MAC-Addresses.txt
 test_arp.txt
