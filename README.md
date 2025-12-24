@@ -5,11 +5,49 @@ Finds the list of incomplete MAC addresses from a Cisco sh IP arp, if any, and c
 * Looking through an entire sh ip arp from a main switch can be daunting, this expedites the process
 * Why bother? Incomplete MAC addresses are indicative of a networking issue
 
+## Installation
+
+### Windows Users
+**Note:** Pre-built Windows executables (.exe files) are not provided due to security concerns. Antivirus software (including Windows Defender and SentinelOne) often flag unsigned executables as potentially harmful, even when they're safe. This is a common false positive for Python executables. [Learn more about why security software flags Python executables](https://pyinstaller.org/en/stable/warnings.html#antivirus-software-false-positives) and [how to handle false positives](https://stackoverflow.com/questions/43777106/program-made-with-pyinstaller-now-seen-as-a-trojan-horse-by-av).
+
+**Recommended approach:** Run the Python script directly. This is safer and more transparent:
+
+1. **Install Python 3.8 or later** from [python.org](https://www.python.org/downloads/)
+   - During installation, check "Add Python to PATH"
+   
+2. **Download the script** from this repository:
+   - Clone the repository, or
+   - Download `Find-Incomplete-MAC-Addresses.py` directly from the repository
+
+3. **Run the script** (see Usage section below)
+
+**Alternative: Create your own executable** (if you need one):
+If you want to create a Windows executable yourself, you can use PyInstaller:
+```bash
+pip install pyinstaller
+pyinstaller --onefile --console Find-Incomplete-MAC-Addresses.py
+```
+The executable will be in the `dist/` folder. Note that you may need to [sign it with a code signing certificate](https://pyinstaller.org/en/stable/warnings.html#code-signing) to avoid security warnings. Even signed executables may still trigger warnings from some security software. See the [PyInstaller documentation on antivirus false positives](https://pyinstaller.org/en/stable/warnings.html#antivirus-software-false-positives) for more information.
+
+### Linux/macOS Users
+The script runs directly with Python 3:
+```bash
+python3 Find-Incomplete-MAC-Addresses.py
+```
+
 ## Usage
 
 ### Command-Line Mode (Recommended)
 You can pass the ARP file as a command-line argument:
 
+**Windows:**
+```cmd
+python Find-Incomplete-MAC-Addresses.py arp_output.txt
+python Find-Incomplete-MAC-Addresses.py C:\path\to\arp.txt
+python Find-Incomplete-MAC-Addresses.py ..\data\arp.txt
+```
+
+**Linux/macOS:**
 ```bash
 python3 Find-Incomplete-MAC-Addresses.py arp_output.txt
 python3 Find-Incomplete-MAC-Addresses.py /absolute/path/to/arp.txt
@@ -26,6 +64,12 @@ The script supports:
 ### Interactive Mode
 If no file is provided, the script will prompt you interactively:
 
+**Windows:**
+```cmd
+python Find-Incomplete-MAC-Addresses.py
+```
+
+**Linux/macOS:**
 ```bash
 python3 Find-Incomplete-MAC-Addresses.py
 ```
@@ -35,6 +79,12 @@ You'll be shown files in the current directory and can enter any of the path for
 ### Help
 View usage information and examples:
 
+**Windows:**
+```cmd
+python Find-Incomplete-MAC-Addresses.py --help
+```
+
+**Linux/macOS:**
 ```bash
 python3 Find-Incomplete-MAC-Addresses.py --help
 ```
@@ -45,6 +95,8 @@ python3 Find-Incomplete-MAC-Addresses.py --help
 ## Updates
 
 ### December 02, 2025
+* **Removed Windows EXE distribution**: Pre-built Windows executables are no longer provided due to security software false positives. Antivirus programs (Windows Defender, SentinelOne, etc.) frequently flag unsigned Python executables as potentially harmful, even when they're safe. [This is a well-documented issue with Python executables](https://pyinstaller.org/en/stable/warnings.html#antivirus-software-false-positives). Users are now directed to run the Python script directly, which is safer, more transparent, and avoids security warnings. Instructions for creating your own executable (if needed) are provided in the Installation section
+* **Added Windows installation instructions**: Added comprehensive installation and usage instructions for Windows users, including how to install Python and run the script directly
 * **Added command-line argument support**: The script now accepts the input file as a command-line argument, enabling automation and scripting workflows. This makes it easier to integrate into larger automation pipelines and batch processing scripts
 * **Enhanced path resolution**: Added support for absolute paths, relative paths (including `..` parent directory navigation), and home directory expansion (`~`). This provides flexibility in how users specify file locations, whether files are in the current directory, subdirectories, or completely different locations
 * **Improved user experience**: Interactive mode now provides clearer instructions about supported path formats, making it easier for users to understand their options when selecting files
